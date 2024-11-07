@@ -120,6 +120,8 @@ def parsePyToFoam(value, forcePrefix):
     if isinstance(value, np.ndarray):
         value = value.tolist()
     if isinstance(value, list):
+        if isinstance(value[0], np.float64): # lists of np.float64 are not printed well, transform to np.array and back to list for propper print
+            value = np.array(a).tolist()
         value = str(value)
         value = value.replace("[", "( ")
         value = value.replace("]", " )")
