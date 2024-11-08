@@ -4,6 +4,7 @@ from subprocess import PIPE, run
 from yruPyFoam.parseFoam import parseFoamToPy, parsePyToFoam
 import sys
 from typing import Any
+import pandas as pd
 
 
 def _warning(inp: str):
@@ -122,7 +123,6 @@ def removeEntry(thisFile, key, noExpand=False, precision=16):
         # still falied. through error
         sys.exit("FATAL ERROR: key " + key + " could not be deleted \n" + output.stderr)
 
-
 # *********** Some comments *************
 # the "readKey" function is really the only function wich should be used from outside of this class at the moment
 #
@@ -152,3 +152,32 @@ def removeEntry(thisFile, key, noExpand=False, precision=16):
 # foamDictionary 0/T -entry boundaryField/Inlet -set '{type fixedValue; value nonuniform List<scalar> 3 (1 2 3 );}'
 # but this would probably be trickyer to parse.
 # Note that we do not need to worry about line breaks. foamDictionary takes care of that.
+
+
+
+
+def readPostProcessingFile(filePath: str, headerLineIndex: int = -1) -> pd.DataFrame:
+    """
+    function to read typical OpenFOAM post processing files (e.g. output of forces functionObject) to a pandas data frame.
+    Input:
+        filePath:   path to the post processing file
+        headerLineIndex: (optional) specify the line index of the header 
+    Output:
+        pd.DataFrame: data frame containing the file content
+    """
+    with open(filePath) as f : 
+        lines = f.readlines()
+        # search header if it is not specified
+        if headerLineIndex == -1: 
+            headerLineIndex = 0
+            while lines[headerLineIndex].startswith("#"):
+                headerLineIndex += 1
+            headerLineIndex -= 1
+        # remove the leading '#' from the header
+        header = lines[headerLineIndex].strip().split()[1:]
+    
+    # read the file to pandas
+    data = pd.read_csv(filePath, sep="\s+", skiprows=headerLineIndex+1, header=None, names=header, skipinitialspace=True) 
+    
+    # TODO files and even the header may contain vectors and columns may have duplicate names
+    return data

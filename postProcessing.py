@@ -4,7 +4,88 @@ import os
 import glob
 import numpy as np
 import pandas as pd
-from yruPyFoam.readWriteFoam import readKey, writeValue, removeEntry
+from yruPyFoam.readWriteFoam import readKey, writeValue, removeEntry, __stdoutToList
+import subprocess
+
+def getLineFromLogFile(logFilePath: str, pattern: str, applyFunction=None) -> list:
+    """
+    Function to search a certain pattern in the OpenFOAM log file and return the result as a list.
+    Wrapper around a call of the grep function.
+    Input:
+        logFilePath:    path to the log file
+        pattern:        search pattern for grep
+        applyFunction:  (optional) function handle for further processing of the output. 
+                        The function is applied to each line of the output individually
+    Output:
+        list: list of all lines of the log file containing the search pattern, if the pattern is not found "False" is returned
+    """
+    grepOut = subprocess.Popen(['grep', pattern, logFilePath], stdout = subprocess.PIPE, universal_newlines=True)
+    grepOut = __stdoutToList(grepOut.stdout.read())
+    if applyFunction != None:
+        if grepOut == [""]:
+            return False
+        else:
+            for i in range(0,len(grepOut)):
+                grepOut[i] = applyFunction(grepOut[i])
+    return grepOut
+
+def getTimeFromLogFile(logFilePath: str, timeType: str = "Time", forceType: bool = False) -> list:
+    """
+    Function to get the time (Time, ExecutionTime or ClockTime) from the log file
+    Input:
+        logFilePath:    path to the log file
+        timeType:       (optional) "Time", "ExecutionTime" or "ClockTime". standard is "Time"
+        forceType:      (optional) Whith this option other timeType values can be used. This enables any value with the patern "value = x" to be read. standard is False
+    Output:
+        list: list of time values as float
+    """
+    if not (timeType in ["Time", "ExecutionTime", "ClockTime"]) and forceType == False:
+        sys.exit("FATAL ERROR: Unknown timeType " + timeType + "\nMust be Time, ExecutionTime or ClockTime") 
+    
+    def timeFromStr(string, timeType):
+        time = string.split()
+        time = time[time.index(timeType) + 2]
+        time = float(time.strip())
+        return time
+    
+    if timeType == "Time": 
+        pattern = "^Time = "
+    else:
+        pattern = timeType
+
+    return getLineFromLogFile(logFilePath, pattern, applyFunction=lambda string: timeFromStr(string, timeType))
+
+def getValueFromLogFile(logFilePath: str, value: str, vectorComponent: int = None) -> list:
+    """
+    Function to get some value in the form "value = x" from the log file.
+    For Vectors components can be specified.
+    Input:
+        logFilePath:    path to the log file
+        value:          The pattern to search for
+        vectorComponent:(optional) If the value is a vector, component to return (0, 1 or 2), standard None -> return vector as list
+    Output:
+        list: list of time values as float
+    """
+    def valueFromStr(string, pattern):
+        # get rid of everything before the pattern
+        value = string[string.find(pattern):]
+        # the value is whatever comes after the "="
+        value = string.split("=")[1].strip()
+        # check for vector
+        if value.startswith("("):
+            value = value[1:].split(")")[0]
+            value = value.split()
+            if vectorComponent == None:
+                for i in [0, 1, 2]:
+                    value[i] = float(value[i].strip())
+            else:
+                value = float(value[vectorComponent].strip())
+        # scalar
+        else:
+            value = float(value.split()[0].strip())
+        return value
+
+    return getLineFromLogFile(logFilePath, value, applyFunction=lambda string: valueFromStr(string, value))
 
 def getLatestTimeDir(casePath: str) -> str:
     """
