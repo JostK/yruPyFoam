@@ -14,7 +14,7 @@ git clone https://github.com/JostK/yruPyFoam.git
 ```
 (or download the source code manually).
 
-The required packages are listed in the `requirements.txt` from this repository and can be installed (after downlad/clone) with 
+The required packages are listed in the `requirements.txt` from this repository and can be installed (after download/clone) with 
 ```bash
 cd yruPyFoam
 pip install -r requirements.txt
