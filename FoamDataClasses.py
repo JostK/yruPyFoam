@@ -1,5 +1,9 @@
 #!/usr/bin/python3
 
+# TODO 
+# This is work in progress.
+# Ideally foam entries should be handled as dataclasses which automaticaly handle any parsing and hold additional data like dimensions
+
 import numpy as np
 import dataclasses
 from dataclasses import dataclass, field
