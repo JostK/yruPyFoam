@@ -2,7 +2,20 @@
 import sys
 import numpy as np
 
-def parseFoamToPy(key, value):
+def parseFoamToPy(key : str, value : str):
+    """
+    Function used by readWriteFoam.readKey to parse entries in foam files to the correct python data types.
+    input:
+        key:   str  name of the key. only needed for error reporting
+        value: str  value read from the foam file as string
+    output:
+        parsedValue: the parsed value is returned as follows:
+                        - single scalar values or scalars preceeded by the "uniform" keyword are returned as int or float
+                        - single vectors or vectors preceeded by the "uniform" keyword are returned as lists
+                        - nonuniform scalar entries (e.g. fields) are returned as lists
+                        - nonuniform vector fields are returned as lists where each vector is a list with three entries
+                        - if non of the above aplies, the entry is considered to be a string and returned as str
+    """
     if "\n" in value:  # multi line value
         if value.replace("nonuniform ", "").replace("uniform ", "").startswith("List<"):  # List
             value = value.split("\n")
@@ -105,7 +118,22 @@ def parseFoamToPy(key, value):
         return parsedValue
 
 
-def parsePyToFoam(value, forcePrefix):
+def parsePyToFoam(value : Any, forcePrefix : str = None):
+    """
+    Function used by readWriteFoam.writeValue to parse python variables to entries in foam files depending on their data type.
+    The behaviour is as follows:
+        - strings are returned as they are provided (no prefix can be forced for strings)
+        - single scalar values are returned preceeded by the "uniform" keyword (To avoid this, convert the values to string befor parsing them or use forcePrefix="")
+        - lists or numpy arrays with a length of three are interpreted as uniform vectors and returned including the "uniform" keyword (To avoid the keyword, use forcePrefix="")
+        - all other lists or numpy arrays are interpreted as nonuniform fields and returned with prefix "nonuniform List<length>" 
+        - lists or numpy arrays consisting of lists with a length of three are interpreted as nonuniform vector fields
+        
+    input:
+        value:       Any    value to be written to the foam file
+        forcePrefix: str    optional prefix to the entry (e.g. the "uniform" keyword, dimension sets, or "" to avoid the standard prefixes in some cases)
+    output:
+        value:  str     the parsed value
+    """
     if isinstance(value, str):  # no parsing for strings (also no prefix, not even forcePrefix)
         return value
     if len(np.shape(value)) > 0:
@@ -117,8 +145,10 @@ def parsePyToFoam(value, forcePrefix):
     else:  # uniform scalar
         prefix = "uniform "
         value = str(value)
+        
     if isinstance(value, np.ndarray):
         value = value.tolist()
+        
     if isinstance(value, list):
         if isinstance(value[0], np.float64): # lists of np.float64 are not printed well, transform to np.array and back to list for propper print
             value = np.array(value).tolist()
@@ -126,6 +156,13 @@ def parsePyToFoam(value, forcePrefix):
         value = value.replace("[", "( ")
         value = value.replace("]", " )")
         value = value.replace(",", "")
+        
     if forcePrefix is not None:
         prefix = forcePrefix
+        
     return prefix + value
+
+# *********** Some comments *************
+# TODO 
+# tensors and tensor fields are currently not parsed correctly 
+# dimensioned entries and dimension sets are not handled appropriately

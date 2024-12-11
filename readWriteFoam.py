@@ -113,6 +113,17 @@ def writeValue(thisFile: str, key: str, value: Any, forcePrefix: str = None, noE
 
 
 def removeEntry(thisFile, key, noExpand=False, precision=16):
+    """
+    Function to delete entry 'key' from 'thisFile'.
+
+    Input:
+        thisFile: str, absolute or relative path to file
+        key: str, name of field or variable to delete
+        noExpand: bool, wheter to excecute function entries in file, allways enabled for large files by now
+        precision: int, maximal write precision of value
+    Output:
+        ---
+    """
     additionalArgs = ["-precision", str(precision)]
     if noExpand is True:
         additionalArgs.append("-disableFunctionEntries")
@@ -122,38 +133,6 @@ def removeEntry(thisFile, key, noExpand=False, precision=16):
     if output.returncode != 0:
         # still falied. through error
         sys.exit("FATAL ERROR: key " + key + " could not be deleted \n" + output.stderr)
-
-# *********** Some comments *************
-# the "readKey" function is really the only function wich should be used from outside of this class at the moment
-#
-# If a full key is given e.g. like this:
-# value = readKey("./0/U", "boundaryField/Inlet/value")
-# the function returns a value (could be a single value or a list of values or a keyword).
-#
-# If no key or the key of a subdict is given e.g. like this:
-# value = readKey("./0/U")
-# or this
-# value = readKey("./0/U", "boundaryField/Inlet")
-# the function returns a dictionary which is structured like the foam file
-#
-# Typically, the cwd must be the top directory of the case to use this fuction or #include statements wont work.
-# Include statemetns can be switched of with the "noExpand" switch, but this may lead to problems in parsing entries like "value uniform (0 0 $Uinlet);"
-#
-# TODO
-# The functionality could easyly be extended to also write entries using the "-add" an "-set" options of foamDictionary
-# one would have to implement some check whether an entry exists allready (-set), or not (-add).
-#
-# for writing entire dictionarys it would probably be easies to first replace the existing dict/subdict (if it exists) with an empty one
-# foamDictionary 0/U -entry boundaryField/Inlet -set '{}'
-# and then fill it with single values, like this:
-# foamDictionary 0/U -entry boundaryField/Inlet/type -add 'fixedValue'
-#
-# Note that foamDictionary could also (alternatively) take entire dicts/subdicts like this:
-# foamDictionary 0/T -entry boundaryField/Inlet -set '{type fixedValue; value nonuniform List<scalar> 3 (1 2 3 );}'
-# but this would probably be trickyer to parse.
-# Note that we do not need to worry about line breaks. foamDictionary takes care of that.
-
-
 
 
 def readPostProcessingFile(filePath: str, headerLineIndex: int = -1) -> pd.DataFrame:
@@ -181,3 +160,27 @@ def readPostProcessingFile(filePath: str, headerLineIndex: int = -1) -> pd.DataF
     
     # TODO files and even the header may contain vectors and columns may have duplicate names
     return data
+
+# *********** Some comments *************
+# If a full key is given e.g. like this:
+# value = readKey("./0/U", "boundaryField/Inlet/value")
+# the function returns a value (could be a single value or a list of values or a keyword).
+#
+# If no key or the key of a subdict is given e.g. like this:
+# value = readKey("./0/U")
+# or this
+# value = readKey("./0/U", "boundaryField/Inlet")
+# the function returns a dictionary which is structured like the foam file
+#
+# Typically, the cwd must be the top directory of the case to use this fuction or #include statements wont work.
+# Include statemetns can be switched of with the "noExpand" switch, but this may lead to problems in parsing entries like "value uniform (0 0 $Uinlet);"
+#
+# TODO
+# for writing entire dictionarys it would probably be easies to first replace the existing dict/subdict (if it exists) with an empty one
+# foamDictionary 0/U -entry boundaryField/Inlet -set '{}'
+# and then fill it with single values, like this:
+# foamDictionary 0/U -entry boundaryField/Inlet/type -add 'fixedValue'
+# Note that foamDictionary could also (alternatively) take entire dicts/subdicts like this:
+# foamDictionary 0/T -entry boundaryField/Inlet -set '{type fixedValue; value nonuniform List<scalar> 3 (1 2 3 );}'
+# but this would probably be trickyer to parse.
+# Note that we do not need to worry about line breaks. foamDictionary takes care of that.
