@@ -241,10 +241,10 @@ def removeTimeDirs(casePath: str, mode: str, settings="", onlyFiles=[], dryRun=F
     else:
         for deleteDir in deleteDirs:
             if onlyFiles == []:
-                os.system(f"rm -rf {deleteDir}")
+                os.system(f"rm -rf {deleteDir} > /dev/null 2>&1")
             else:
                 for thisFile in onlyFiles:
-                    os.system(f"rm {deleteDir}{thisFile}")
+                    os.system(f"rm {deleteDir}{thisFile} > /dev/null 2>&1")
 
 def __getVolumeAverage(field: pd.DataFrame, vols: pd.DataFrame, axialDir):
     """
