@@ -131,6 +131,8 @@ def removeTimeDirs(casePath: str, mode: str, settings="", onlyFiles=[], dryRun=F
                     all             delete all time directories
                     allButLast      delete all but the last direcory
                     allBut          delete all but the direcories given in settings (list)
+                    greater         delete all time direcories greater than the value given in settings
+                    smaller         delete all time direcories smaller than the value given in settings
                     timeStep        delete with a given time step (i.e keep the values closest to the time step given in settings)
         settings: additional data for modes.
         onlyFiles: optionally delete only the given files from the time dirs 
@@ -179,6 +181,19 @@ def removeTimeDirs(casePath: str, mode: str, settings="", onlyFiles=[], dryRun=F
             realSettings.append(realDirName[0])
         deleteDirs = [i for i in timeDirs if i not in realSettings]
         print(f"keeping {realSettings}")
+    elif mode == "greater" or mode == "smaller":
+        keepDirs = []
+        # check if settings is convertible to a float number
+        cutOff = float(settings)
+        # convert time list to float
+        times = [ __timeFromTimeDirPath(i) for i in timeDirs ]
+        # loop over times and compare
+        for timeI in range(0,len(times)):
+            if (mode == "greater" and times[timeI] > cutOff) or (mode == "smaller" and times[timeI] < cutOff):
+                deleteDirs.append(timeDirs[timeI])
+            else:
+                keepDirs.append(timeDirs[timeI])
+        print(f"keeping {keepDirs}")
     elif mode == "timeStep":
         # check if settings is convertible to a float number
         tStep = float(settings)
