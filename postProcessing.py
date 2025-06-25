@@ -239,12 +239,24 @@ def removeTimeDirs(casePath: str, mode: str, settings="", onlyFiles=[], dryRun=F
             print("...would have been deleted from the ollowing directories  without dryRun:")
             print(deleteDirs)
     else:
+        delStr=""
         for deleteDir in deleteDirs:
             if onlyFiles == []:
-                os.system(f"rm -rf {deleteDir} > /dev/null 2>&1")
+                #os.system(f"rm -rf {deleteDir} > /dev/null 2>&1")
+                delStr = delStr + " " + deleteDir
             else:
                 for thisFile in onlyFiles:
-                    os.system(f"rm {deleteDir}{thisFile} > /dev/null 2>&1")
+                    delStr = delStr + " " + deleteDir + thisFile
+                    #os.system(f"rm {deleteDir}{thisFile} > /dev/null 2>&1")
+                    
+            # Make sure delStr does not get too log
+            if len(delStr) > 5e3:
+                os.system(f"rm -rf {delStr} > /dev/null 2>&1")
+                delStr=""
+        
+        # Delete files
+        if len(delStr) > 0:
+            os.system(f"rm -rf {delStr} > /dev/null 2>&1")
 
 def __getVolumeAverage(field: pd.DataFrame, vols: pd.DataFrame, axialDir):
     """
