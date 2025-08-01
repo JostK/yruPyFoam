@@ -236,7 +236,7 @@ def removeTimeDirs(casePath: str, mode: str, settings="", onlyFiles=[], dryRun=F
         else:
             print("the following files:")
             print(onlyFiles)
-            print("...would have been deleted from the ollowing directories  without dryRun:")
+            print("...would have been deleted from the following directories  without dryRun:")
             print(deleteDirs)
     else:
         delStr=""
@@ -246,7 +246,8 @@ def removeTimeDirs(casePath: str, mode: str, settings="", onlyFiles=[], dryRun=F
                 delStr = delStr + " " + deleteDir
             else:
                 for thisFile in onlyFiles:
-                    delStr = delStr + " " + deleteDir + thisFile
+                    delStr = delStr + " " + deleteDir + thisFile + " " + deleteDir + thisFile + ".gz" 
+                    # Note also compressed files (e.g., U.gz) are deleted
                     #os.system(f"rm {deleteDir}{thisFile} > /dev/null 2>&1")
                     
             # Make sure delStr does not get too log
